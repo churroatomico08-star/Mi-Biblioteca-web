@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Libros</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='atyle.css') }}">
+    <style>
+        .panel { max-width: 1100px; margin: 30px auto; background: rgba(255, 255, 255, 0.9); padding: 25px; border-radius: 15px; position: relative; z-index: 10; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #007bff; color: white; }
+        .btn { padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85em; cursor: pointer; border: none; color: white; display: inline-block; margin: 2px; }
+        .btn-edit { background: #ffc107; color: black; }
+        .btn-del { background: #dc3545; }
+        .btn-status { background: #17a2b8; }
+        .btn-view { background: #6c757d; }
+        .btn-save { background: #28a745; padding: 4px 8px; }
+        input[type="text"] { padding: 4px; border: 1px solid #ccc; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>📚 Gestión Integral de Biblioteca</h2>
+            <a href="/logout" style="color: #dc3545; font-weight: bold;">Cerrar Sesión</a>
+        </div>
+
+        {% if rol == 'admin' %}
+        <div style="background: #f8f9fa; padding: 15px; margin-top: 20px; border-radius: 8px; border: 1px solid #ddd;">
+            <h4 style="margin-bottom: 10px;">➕ Agregar Nuevo Libro o Archivo</h4>
+            <form action="/agregar_libro" method="POST" enctype="multipart/form-data">
+                <input type="text" name="titulo" placeholder="Título del libro" required>
+                <input type="text" name="autor" placeholder="Autor" required>
+                <input type="file" name="archivo" accept=".pdf,.doc,.docx">
+                <button type="submit" class="btn" style="background: #28a745;">💾 Guardar Libro</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Información (Título y Autor)</th>
+                    <th>Estado</th>
+                    <th>Archivo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for libro in libros %}
+                <tr>
+                    <td>
+                        {% if rol == 'admin' %}
+                        <!-- Formulario para cambiar nombre y autor -->
+                        <form action="{{ url_for('editar_libro', libro_id=libro.id) }}" method="POST">
+                            <input type="text" name="titulo" value="{{ libro.titulo }}" style="width: 120px;">
+                            <input type="text" name="autor" value="{{ libro.autor }}" style="width: 100px;">
+                            <button type="submit" class="btn btn-save" title="Guardar Cambios">✔</button>
+                        </form>
+                        {% else %}
+                            <strong>{{ libro.titulo }}</strong><br><small>{{ libro.autor }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <b style="color: {{ 'green' if libro.disponible else 'red' }}">
+                            {{ "Disponible" if libro.disponible else "Prestado" }}
+                        </b>
+                        {% if rol == 'admin' %}
+                        <br>
+                        <a href="{{ url_for('cambiar_estado', libro_id=libro.id) }}" class="btn btn-status" style="font-size: 0.7em;">🔄 Cambiar</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if libro.archivo %}
+                            <a href="{{ url_for('download_file', libro_id=libro.id) }}" target="_blank" class="btn btn-view">👁 Ver</a>
+                            <a href="{{ url_for('download_file', libro_id=libro.id) }}" download class="btn" style="background: #343a40;">📥 Bajar</a>
+                        {% else %}
+                            <small>Sin archivo</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if rol == 'admin' %}
+                        <a href="{{ url_for('eliminar_libro', libro_id=libro.id) }}" class="btn btn-del" onclick="return confirm('¿Eliminar este libro?')">🗑 Eliminar</a>
+                        {% else %}
+                        <span style="color: #666;">Solo Lectura</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <p style="text-align: center; margin-top: 20px;"><a href="/">« Volver al Menú Principal</a></p>
+    </div>
+</body>
+</html>
